@@ -46,6 +46,7 @@ def verify_webhook():
 
 @app.route('/webhook/whatsapp', methods=['POST'])
 def receive_message():
+    print("📩 Incoming WhatsApp webhook:")
     data = request.json
     entry = data.get("entry", [])[0]
     changes = entry.get("changes", [])[0]
@@ -58,6 +59,7 @@ def receive_message():
         return jsonify({"message": "No contacts or messages"}), 200
 
     phone_number = contacts[0]['wa_id']
+    print(f"phone_number, {phone_number}")
     customer_name = contacts[0].get("profile", {}).get("name", "Unknown")
     message = messages_data[0]
     text = message.get("text", {}).get("body", "")
@@ -65,11 +67,14 @@ def receive_message():
 
     metadata = value.get("metadata", {})
     recipient_number = metadata.get("display_phone_number")
+    print(f"recipient_number, {recipient_number}")
     business = businesses.find_one({"whatsapp_number": recipient_number})
     if not business:
         return jsonify({"error": "Business not found"}), 404
 
     business_id = business["_id"]
+    
+    print(f"business_id, {business_id}")
 
     # 🔍 Get or create customer from phone number
     customer = customers.find_one({"phone_number": phone_number})
