@@ -4,4 +4,4 @@ python-dotenv
 pymongo
 requests
 gunicorn
-firebase_client
+firebase_admin
