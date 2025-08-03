@@ -4,16 +4,22 @@ from bson import ObjectId
 from datetime import datetime
 import os
 import requests
+from dotenv import load_dotenv 
+
+
+load_dotenv()
 
 app = Flask(__name__)
 
 # --- Environment Variables ---
-MONGO_URI = os.environ.get("MONGO_URI")
-WHATSAPP_TOKEN = os.environ.get("WHATSAPP_ACCESS_TOKEN")
-PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
-VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN")
-MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME")
-MONGODB_COLLECTION_NAME=os.environ.get("MONGODB_COLLECTION_NAME")
+MONGO_URI = os.getenv("MONGO_URI")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
+VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME")
+MONGODB_COLLECTION_NAME=os.getenv("MONGODB_COLLECTION_NAME")
+
+print(f"PHONE_NUMBER_ID {PHONE_NUMBER_ID}")
 
 client = MongoClient(MONGO_URI)
 db = client["sasabot"]
