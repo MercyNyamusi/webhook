@@ -157,12 +157,14 @@ def send_message():
         return jsonify({"error": "Session not found"}), 404
 
     customer_id = session['customer_id']
+    print(f"customer_id : {customer_id}")
     customer = customers.find_one({"_id": customer_id})
 
     if not customer or 'phone_number' not in customer:
         return jsonify({"error": "Customer phone not found"}), 404
 
     to_number = customer['phone_number'] 
+    print(f"phone_number : {to_number}")
     url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
