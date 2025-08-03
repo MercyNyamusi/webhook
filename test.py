@@ -16,7 +16,7 @@ MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME")
 MONGODB_COLLECTION_NAME=os.environ.get("MONGODB_COLLECTION_NAME")
 
 client = MongoClient(MONGO_URI)
-db = client[MONGODB_DB_NAME]
+db = client["sasabot"]
 sessions = db["chat_sessions"]
 
 businesses = db['businesses']
