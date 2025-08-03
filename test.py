@@ -4,6 +4,7 @@ from bson import ObjectId
 from datetime import datetime
 import os
 import requests
+from firebase_client import send_fcm_notifications
 from dotenv import load_dotenv 
 
 
@@ -26,6 +27,7 @@ db = client[MONGODB_DB_NAME]
 sessions = db["chat_sessions"]
 customers = db["customers"]
 businesses = db['businesses']
+vendors = db['vendors']
 
 
 def now():
@@ -76,7 +78,13 @@ def receive_message():
         return jsonify({"error": "Business not found"}), 404
 
     business_id = business["_id"]
-    
+    print(f"business_id, {business_id}")
+
+    vendor_id = business["vendor"]
+    if not vendor_id:
+        return jsonify({"error": "Vendor not found"}), 404
+
+    business_id = business["_id"]
     print(f"business_id, {business_id}")
 
     # 🔍 Get or create customer from phone number
@@ -133,6 +141,15 @@ def receive_message():
             "$push": {"messages": message_data}
         })
 
+        vendor = vendors.find_one({"_id": vendor_id})
+        if vendor and vendor.get("device_token"):
+            send_fcm_notifications(
+                token=vendor["device_token"],
+                title="New customer message",
+                body=text,
+                data={"session_id": str(session_id), "customer_phone": phone_number}
+            )
+
     return jsonify({"status": "message saved"}), 200
 
 
@@ -160,6 +177,15 @@ def update_message_status():
         )
 
     return jsonify({"status": "updated"}), 200
+
+@app.route("/register_device_token", methods=["POST"])
+def register_token():
+    data = request.get_json()
+    vendor_id = data["vendor_id"]
+    token = data["token"]
+    vendors.update_one({"_id": ObjectId(vendor_id)},
+                       {"$set": {"device_token": token}})
+    return jsonify({"status":"token saved"}), 200
 
 
 @app.route('/send_message', methods=['POST'])
@@ -220,3 +246,5 @@ def send_message():
             "error": "Failed to send message",
             "response": response.json()
         }), 500
+    
+    

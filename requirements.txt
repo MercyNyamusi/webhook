@@ -4,3 +4,4 @@ python-dotenv
 pymongo
 requests
 gunicorn
+firebase_client
