@@ -97,7 +97,7 @@ def receive_message():
 
     message_data = {
         "_id": ObjectId(),
-        "sender_type": "user",
+        "sender_type": "customer",
         "message_text": text,
         "message_type": "text",
         "timestamp": timestamp,
