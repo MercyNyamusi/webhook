@@ -42,6 +42,8 @@ def verify_webhook():
     if mode == "subscribe" and token == VERIFY_TOKEN:
         return challenge, 200
     return "Verification failed", 403
+
+
 @app.route('/webhook/whatsapp', methods=['POST'])
 def receive_message():
     data = request.json
@@ -63,17 +65,17 @@ def receive_message():
 
     metadata = value.get("metadata", {})
     recipient_number = metadata.get("display_phone_number")
-    business = businesses.find_one({"phone_number": recipient_number})
+    business = businesses.find_one({"whatsapp_number": recipient_number})
     if not business:
         return jsonify({"error": "Business not found"}), 404
 
     business_id = business["_id"]
 
     # 🔍 Get or create customer from phone number
-    customer = customers.find_one({"phone": phone_number})
+    customer = customers.find_one({"phone_number": phone_number})
     if not customer:
         customer_id = customers.insert_one({
-            "phone": phone_number,
+            "phone_number": phone_number,
             "name": customer_name,
             "created_at": now()
         }).inserted_id
@@ -93,6 +95,7 @@ def receive_message():
         "timestamp": timestamp,
         "status": "sent"
     }
+
 
     if not session:
         session_id = sessions.insert_one({
@@ -194,7 +197,8 @@ def send_message():
             {"$push": {
                 "messages": {
                     "sender_type": "vendor",
-                    "text": text,
+                    "message_text": text,
+                    "message_type": "text",
                     "timestamp": datetime.utcnow(),
                     "status": "sent",
                     "whatsapp_message_id": message_id
