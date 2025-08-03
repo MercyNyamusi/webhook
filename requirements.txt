@@ -1,4 +1,6 @@
 Flask
 requests
 python-dotenv
+pymongo
+requests
 gunicorn
