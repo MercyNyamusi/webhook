@@ -22,7 +22,7 @@ MONGODB_COLLECTION_NAME = os.environ.get("MONGODB_COLLECTION_NAME")
 print(f"PHONE_NUMBER_ID {PHONE_NUMBER_ID}")
 
 client = MongoClient(MONGO_URI)
-db = client["sasabot"]
+db = client[MONGODB_DB_NAME]
 sessions = db["chat_sessions"]
 customers = db["customers"]
 businesses = db['businesses']
@@ -47,6 +47,9 @@ def verify_webhook():
 @app.route('/webhook/whatsapp', methods=['POST'])
 def receive_message():
     print("📩 Incoming WhatsApp webhook:")
+    print(request.data)  # raw body
+    print(request.headers)  # see headers
+    print(request.get_json(force=True))  # force parse JSON
     data = request.json
     entry = data.get("entry", [])[0]
     changes = entry.get("changes", [])[0]
