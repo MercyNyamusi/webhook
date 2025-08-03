@@ -18,7 +18,7 @@ MONGODB_COLLECTION_NAME=os.environ.get("MONGODB_COLLECTION_NAME")
 client = MongoClient(MONGO_URI)
 db = client["sasabot"]
 sessions = db["chat_sessions"]
-
+customers = db["customers"]
 businesses = db['businesses']
 
 
@@ -36,9 +36,6 @@ def verify_webhook():
     if mode == "subscribe" and token == VERIFY_TOKEN:
         return challenge, 200
     return "Verification failed", 403
-
-
-# Receive message
 @app.route('/webhook/whatsapp', methods=['POST'])
 def receive_message():
     data = request.json
@@ -66,13 +63,24 @@ def receive_message():
 
     business_id = business["_id"]
 
+    # 🔍 Get or create customer from phone number
+    customer = customers.find_one({"phone": phone_number})
+    if not customer:
+        customer_id = customers.insert_one({
+            "phone": phone_number,
+            "name": customer_name,
+            "created_at": now()
+        }).inserted_id
+    else:
+        customer_id = customer["_id"]
+
     session = sessions.find_one({
         "business_id": business_id,
-        "customer_id": phone_number
+        "customer_id": customer_id
     })
 
     message_data = {
-        "_id": ObjectId(),  
+        "_id": ObjectId(),
         "sender_type": "user",
         "message_text": text,
         "message_type": "text",
@@ -83,7 +91,7 @@ def receive_message():
     if not session:
         session_id = sessions.insert_one({
             "business_id": business_id,
-            "customer_id": phone_number,
+            "customer_id": customer_id, 
             "customer_name": customer_name,
             "is_handled_by_vendor": False,
             "notifications_enabled": True,
@@ -111,6 +119,7 @@ def receive_message():
     return jsonify({"status": "message saved"}), 200
 
 
+
 # Message Status Updates
 @app.route('/webhook/whatsapp/status', methods=['POST'])
 def update_message_status():
@@ -136,7 +145,6 @@ def update_message_status():
     return jsonify({"status": "updated"}), 200
 
 
-# Send Message from Vendor to Customer
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.json
@@ -147,7 +155,13 @@ def send_message():
     if not session:
         return jsonify({"error": "Session not found"}), 404
 
-    to_number = session['customer_id']
+    customer_id = session['customer_id']
+    customer = customers.find_one({"_id": customer_id})
+
+    if not customer or 'phone' not in customer:
+        return jsonify({"error": "Customer phone not found"}), 404
+
+    to_number = customer['phone_number'] 
     url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
@@ -161,35 +175,27 @@ def send_message():
         "text": {"body": text}
     }
 
-    response = requests.post(url, json=payload, headers=headers)
-    if not response.ok:
-        return jsonify({"error": response.text}), 500
+    response = requests.post(url, headers=headers, json=payload)
 
-    res_json = response.json()
-    msg_id = res_json.get("messages", [{}])[0].get("id", None)
-    timestamp = now()
+    if response.status_code == 200:
+        message_id = response.json().get("messages", [{}])[0].get("id")
+        
+        sessions.update_one(
+            {"_id": session_id},
+            {"$push": {
+                "messages": {
+                    "sender_type": "vendor",
+                    "text": text,
+                    "timestamp": datetime.utcnow(),
+                    "status": "sent",
+                    "whatsapp_message_id": message_id
+                }
+            }}
+        )
 
-    message_record = {
-        "_id": ObjectId(msg_id) if msg_id else ObjectId(),
-        "sender_type": "vendor",
-        "message_text": text,
-        "message_type": "text",
-        "timestamp": timestamp,
-        "status": "sent"
-    }
-
-    sessions.update_one({"_id": session_id}, {
-        "$set": {
-            "last_message": text,
-            "last_message_time": timestamp,
-            "updated_at": timestamp,
-            "is_handled_by_vendor": True
-        },
-        "$push": {"messages": message_record}
-    })
-
-    return jsonify({"status": "message sent", "message_id": msg_id}), 200
-
-
-
-
+        return jsonify({"status": "Message sent", "message_id": message_id}), 200
+    else:
+        return jsonify({
+            "error": "Failed to send message",
+            "response": response.json()
+        }), 500
