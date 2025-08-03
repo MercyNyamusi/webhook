@@ -149,6 +149,7 @@ def update_message_status():
 def send_message():
     data = request.json
     session_id = ObjectId(data['session_id'])
+    print(f"session_id : {session_id}")
     text = data['text']
 
     session = sessions.find_one({"_id": session_id})
@@ -158,7 +159,7 @@ def send_message():
     customer_id = session['customer_id']
     customer = customers.find_one({"_id": customer_id})
 
-    if not customer or 'phone' not in customer:
+    if not customer or 'phone_number' not in customer:
         return jsonify({"error": "Customer phone not found"}), 404
 
     to_number = customer['phone_number'] 
