@@ -1,30 +1,32 @@
 from flask import Flask, request, jsonify
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
 
-VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")  # Set this in your .env
+VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
 WHATSAPP_ID = os.getenv("WHATSAPP_ID")
 ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
 
 @app.route("/whatsapp/message", methods=["GET", "POST"])
 def whatsapp_webhook():
     if request.method == "GET":
-        # Verification from Meta
+        mode = request.args.get("hub.mode")
         verify_token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
-        mode = request.args.get("hub.mode")
-        
-        if mode and verify_token == VERIFY_TOKEN:
+
+        if mode == "subscribe" and verify_token == VERIFY_TOKEN:
+            print("✅ Webhook verified successfully.")
             return challenge, 200
+        print("❌ Webhook verification failed.")
         return "Verification failed", 403
 
     elif request.method == "POST":
         data = request.get_json()
-        print("📥 Incoming WhatsApp message webhook:")
+        print("📥 Incoming WhatsApp webhook payload:")
         print(data)
 
         try:
@@ -38,7 +40,6 @@ def whatsapp_webhook():
                 message_text = message["text"]["body"]
                 print(f"📩 Message from {customer_phone}: {message_text}")
 
-                # Example: auto-reply
                 send_message(customer_phone, "Thanks for your message! We'll get back to you shortly.")
         except Exception as e:
             print(f"❌ Error handling message: {e}")
