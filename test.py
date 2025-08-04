@@ -180,9 +180,10 @@ def create_order():
     
     business_id = data["business_id"]
     print(f"business_id: {business_id}")
-    vendor = db.businesses.find_one({"_id": business_id})
-    print(f"vendor: {vendor}")
-    vendors_list = db.vendors.find_one({"_id": vendor})    
+    business_list = db.businesses.find_one({"_id": business_id})
+    vendor_select = business_list["vendor"]
+    print(f"vendor: {vendor_select}")
+    vendors_list = db.vendors.find_one({"_id": vendor_select})    
     vendor_id = vendors_list["_id"]
 
     customer = db.customers.find_one({"_id": data["customer_id"]})
