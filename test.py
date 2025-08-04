@@ -180,6 +180,7 @@ def create_order():
     
     business_id = data["business_id"]
     vendor = businesses.find_one({"_id": business_id})
+    print(f"vendor: {vendor}")
     vendors_list = vendors.find_one({"_id": vendor})    
     vendor_id = vendors_list["_id"]
 
