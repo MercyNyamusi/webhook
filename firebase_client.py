@@ -4,12 +4,16 @@ from firebase_admin import credentials, messaging
 cred = credentials.Certificate("service-account.json")
 firebase_admin.initialize_app(cred)
 
-def send_fcm_notifications(token: str, title: str, body: str, data=None):
-    print("sending fcm notification to phone now")
+def send_fcm_notification(token: str, title: str, body: str, data: dict = None):
+    print("📤 Sending FCM to:", token)
     message = messaging.Message(
         notification=messaging.Notification(title=title, body=body),
-        data=data or {},
         token=token,
+        data=data or {},
     )
-    resp = messaging.send(message)
-    print("FCM sent:", resp)
+    try:
+        response = messaging.send(message)
+        print("✅ FCM sent:", response)
+    except Exception as e:
+        print("❌ Failed to send FCM:", e)
+

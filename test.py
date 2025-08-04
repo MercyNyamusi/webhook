@@ -141,6 +141,7 @@ def receive_message():
             "$push": {"messages": message_data}
         })
 
+        # Notification for chat order
         vendor = vendors.find_one({"_id": vendor_id})
         if vendor and vendor.get("fcm_token"):
             print("sending fcm notification")
@@ -148,12 +149,39 @@ def receive_message():
                 token=vendor["fcm_token"],
                 title=customer_name,
                 body=text,
-                data={"session_id": str(session_id), "customer_phone": phone_number}
+                data={"type": "chat", "session_id": str(session_id), "customer_phone": phone_number}
             )
 
     return jsonify({"status": "message saved"}), 200
 
+# Notification for new order
+def notify_vendor_new_order(order_id, vendor_id, customer_name, phone_number):
+    vendor = db.vendors.find_one({"_id": vendor_id})
+    if vendor and vendor.get("fcm_token"):
+        send_fcm_notifications(
+            token=vendor["fcm_token"],
+            title="🛒 New Order Received",
+            body=f"Order from {customer_name}",
+            data={
+                "type": "order",
+                "order_id": str(order_id),
+                "customer_phone": phone_number
+            }
+        )
 
+@app.route('/create_order', methods=['POST'])
+def create_order():
+    data = request.get_json()
+    # assume order contains vendor_id, customer_id, etc.
+    vendor_id = ObjectId(data["vendor_id"])
+    order_id = db.orders.insert_one(data).inserted_id
+
+    customer = db.customers.find_one({"_id": ObjectId(data["customer_id"])})
+    customer_name = customer["name"] if customer else "new customer"
+    customer_phone = customer["phone_number"] if customer else "new customer"
+
+    notify_vendor_new_order(order_id, vendor_id, customer_name, customer_phone)
+    return jsonify({"order_id": str(order_id)}), 201
 
 # Message Status Updates
 @app.route('/webhook/whatsapp/status', methods=['POST'])
@@ -179,14 +207,6 @@ def update_message_status():
 
     return jsonify({"status": "updated"}), 200
 
-@app.route("/register_device_token", methods=["POST"])
-def register_token():
-    data = request.get_json()
-    vendor_id = data["vendor_id"]
-    token = data["token"]
-    vendors.update_one({"_id": ObjectId(vendor_id)},
-                       {"$set": {"device_token": token}})
-    return jsonify({"status":"token saved"}), 200
 
 
 @app.route('/send_message', methods=['POST'])
