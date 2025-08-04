@@ -4,7 +4,7 @@ from firebase_admin import credentials, messaging
 cred = credentials.Certificate("service-account.json")
 firebase_admin.initialize_app(cred)
 
-def send_fcm_notification(token: str, title: str, body: str, data: dict = None):
+def send_fcm_notifications(token: str, title: str, body: str, data: dict = None):
     print("📤 Sending FCM to:", token)
     message = messaging.Message(
         notification=messaging.Notification(title=title, body=body),
