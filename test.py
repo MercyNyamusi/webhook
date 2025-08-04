@@ -146,7 +146,7 @@ def receive_message():
             print("sending fcm notification")
             send_fcm_notifications(
                 token=vendor["fcm_token"],
-                title="New customer message",
+                title=customer_name,
                 body=text,
                 data={"session_id": str(session_id), "customer_phone": phone_number}
             )
