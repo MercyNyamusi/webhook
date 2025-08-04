@@ -49,9 +49,9 @@ def verify_webhook():
 @app.route('/webhook/whatsapp', methods=['POST'])
 def receive_message():
     print("📩 Incoming WhatsApp webhook:")
-    print(request.data)  # raw body
-    print(request.headers)  # see headers
-    print(request.get_json(force=True))  # force parse JSON
+    print(request.data)  
+    print(request.headers) 
+    print(request.get_json(force=True))  
     data = request.json
     entry = data.get("entry", [])[0]
     changes = entry.get("changes", [])[0]
@@ -248,3 +248,23 @@ def send_message():
         }), 500
     
     
+@app.route('/save_fcm_token', methods=['POST'])
+def save_fcm_token():
+    print("saving token")
+    data = request.get_json()
+    fcm_token = data.get('fcm_token')
+    business_id = data.get('business_id')  
+
+    if not fcm_token or not business_id:
+        return jsonify({'error': 'Missing fields'}), 400
+
+    business_select = businesses.find_one({"_id": ObjectId(business_id)})
+    vendor_id = business_select["vendor"]
+
+    print(f"vendor_id : {vendor_id}")
+    db.vendors.update_one(
+        {"_id": vendor_id},
+        {"$set": {"fcm_token": fcm_token}}
+    )
+
+    return jsonify({'status': 'Token saved'}), 200
