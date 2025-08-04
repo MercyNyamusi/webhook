@@ -179,6 +179,7 @@ def create_order():
     order_id = db.orders.insert_one(data).inserted_id
     
     business_id = data["business_id"]
+    print(f"business_id: {business_id}")
     vendor = db.businesses.find_one({"_id": business_id})
     print(f"vendor: {vendor}")
     vendors_list = db.vendors.find_one({"_id": vendor})    
