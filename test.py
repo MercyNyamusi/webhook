@@ -143,6 +143,7 @@ def receive_message():
 
         vendor = vendors.find_one({"_id": vendor_id})
         if vendor and vendor.get("device_token"):
+            print("sending fcm notification")
             send_fcm_notifications(
                 token=vendor["device_token"],
                 title="New customer message",
