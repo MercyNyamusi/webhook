@@ -173,18 +173,26 @@ def notify_vendor_new_order(order_id, vendor_id, customer_name, phone_number):
 def create_order():
     data = request.get_json()
 
-    data["customer_id"] = ObjectId(data["customer_id"])
-    data["business_id"] = ObjectId(data["business_id"])
+    businessId = ObjectId(data["customer_id"])
+    customerId = ObjectId(data["business_id"])
+
+    data["customer_id"] = customerId
+    data["business_id"] = businessId
 
     order_id = db.orders.insert_one(data).inserted_id
     
-    business_id = data["business_id"]
+    business_id = businessId
     print(f"business_id: {business_id}")
+
     business_list = db.businesses.find_one({"_id": business_id})
+    print(f"business_list: {business_list}")
+
     vendor_select = business_list["vendor"]
     print(f"vendor: {vendor_select}")
+
     vendors_list = db.vendors.find_one({"_id": vendor_select})    
     vendor_id = vendors_list["_id"]
+    print(f"vendor_id: {vendor_id}")
 
     customer = db.customers.find_one({"_id": data["customer_id"]})
     customer_name = customer["name"] if customer else "new customer"
