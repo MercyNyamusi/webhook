@@ -83,7 +83,7 @@ def receive_message():
     vendor_id = business["vendor"]
     if not vendor_id:
         return jsonify({"error": "Vendor not found"}), 404
-
+    print(f"vendor_id, {vendor_id}")
     business_id = business["_id"]
     print(f"business_id, {business_id}")
 
@@ -142,10 +142,10 @@ def receive_message():
         })
 
         vendor = vendors.find_one({"_id": vendor_id})
-        if vendor and vendor.get("device_token"):
+        if vendor and vendor.get("fcm_token"):
             print("sending fcm notification")
             send_fcm_notifications(
-                token=vendor["device_token"],
+                token=vendor["fcm_token"],
                 title="New customer message",
                 body=text,
                 data={"session_id": str(session_id), "customer_phone": phone_number}
