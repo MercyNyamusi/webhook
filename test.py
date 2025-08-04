@@ -172,8 +172,9 @@ def notify_vendor_new_order(order_id, vendor_id, customer_name, phone_number):
 @app.route('/create_order', methods=['POST'])
 def create_order():
     data = request.get_json()
-    # assume order contains vendor_id, customer_id, etc.
-    vendor_id = ObjectId(data["vendor_id"])
+    business_id = ObjectId(data["business_id"])
+    vendor = businesses.find_one({"_id": business_id})
+    vendor_id = vendors.find_one({"_id": vendor})
     order_id = db.orders.insert_one(data).inserted_id
 
     customer = db.customers.find_one({"_id": ObjectId(data["customer_id"])})
