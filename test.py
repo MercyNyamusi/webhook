@@ -179,9 +179,9 @@ def create_order():
     order_id = db.orders.insert_one(data).inserted_id
     
     business_id = data["business_id"]
-    vendor = businesses.find_one({"_id": business_id})
+    vendor = db.businesses.find_one({"_id": business_id})
     print(f"vendor: {vendor}")
-    vendors_list = vendors.find_one({"_id": vendor})    
+    vendors_list = db.vendors.find_one({"_id": vendor})    
     vendor_id = vendors_list["_id"]
 
     customer = db.customers.find_one({"_id": data["customer_id"]})
