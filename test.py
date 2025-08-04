@@ -180,7 +180,8 @@ def create_order():
     
     business_id = data["business_id"]
     vendor = businesses.find_one({"_id": business_id})
-    vendor_id = vendors.find_one({"_id": vendor})    
+    vendors = vendors.find_one({"_id": vendor})    
+    vendor_id = vendors["_id"]
 
     customer = db.customers.find_one({"_id": data["customer_id"]})
     customer_name = customer["name"] if customer else "new customer"
